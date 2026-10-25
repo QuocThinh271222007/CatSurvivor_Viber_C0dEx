@@ -165,6 +165,12 @@ private static void DrawBossBars(Canvas c, World w)
 	private static Bitmap _skillIcons;
 	private static bool _skillIconsLoaded;
 
+	// Thứ tự khung trong skills.png do bạn vẽ: 0 đồng hồ bấm giờ, 1 hình vàng, 2 bông tuyết xanh, 3 sóng trắng -> gán theo ý nghĩa:
+	// Sóng xung kích = sóng trắng (3), Làm chậm = đồng hồ (0), Ngừng thời gian = bông tuyết (2), Bất tử = hình vàng (1). Đổi mảng này nếu muốn gán khác.
+	private static readonly int[] SkillIconFrame = { 3, 0, 2, 1 };
+	private static Rectangle[] _iconRects;      // vùng có hình (cắt sát viền) của từng khung, toạ độ trong ảnh
+	private static int _iconBoxDim;             // cạnh lớn nhất của các vùng đó
+
 	private static Bitmap SkillIcons(out int frame)
 	{
 		if (!_skillIconsLoaded)
@@ -173,9 +179,27 @@ private static void DrawBossBars(Canvas c, World w)
 			try { _skillIcons = AssetStore.OptionalImage(SkillIconsPath); }
 			catch (Exception) { _skillIcons = null; }
 			if (_skillIcons != null && (_skillIcons.Height <= 0 || _skillIcons.Width < _skillIcons.Height)) { AssetStore.Report("Assets/" + SkillIconsPath, "cần dải ngang các khung vuông (ít nhất 1 khung)"); _skillIcons = null; }
+			if (_skillIcons != null) { try { MeasureSkillIcons(); } catch (Exception) { _iconRects = null; _iconBoxDim = 0; } }
 		}
 		frame = _skillIcons?.Height ?? 0;
 		return _skillIcons;
+	}
+
+	/// <summary>Tìm vùng có hình của từng khung icon (khung 64x64 thường chỉ vẽ ~30px ở giữa) để HUD vẽ sát hình thay vì chừa cả khung.</summary>
+	private static void MeasureSkillIcons()
+	{
+		int fs = _skillIcons.Height, n = _skillIcons.Width / fs;
+		_iconRects = new Rectangle[n];
+		_iconBoxDim = 0;
+		for (int i = 0; i < n; i++)
+		{
+			int x0 = fs, y0 = fs, x1 = -1, y1 = -1;
+			for (int y = 0; y < fs; y++)
+				for (int x = 0; x < fs; x++)
+					if (_skillIcons.GetPixel(i * fs + x, y).A > 8) { x0 = Math.Min(x0, x); y0 = Math.Min(y0, y); x1 = Math.Max(x1, x); y1 = Math.Max(y1, y); }
+			_iconRects[i] = x1 < 0 ? new Rectangle(i * fs, 0, fs, fs) : new Rectangle(i * fs + x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+			_iconBoxDim = Math.Max(_iconBoxDim, Math.Max(_iconRects[i].Width, _iconRects[i].Height));
+		}
 	}
 
 	/// <summary>Hàng icon giáp đang mặc, ngay dưới thanh mana: mỗi ô 16x16 một món (không chữ/số). Trả về toạ độ x ngay sau hàng icon.</summary>
@@ -199,14 +223,18 @@ private static void DrawBossBars(Canvas c, World w)
 	private static void DrawSkills(Canvas c, Player p)
 	{
 		var sk = p.Skills;
-		SkillIcons(out int iconSize);
-		float size = MathF.Max(30f, iconSize + 6f);
+		SkillIcons(out _);
+		float size = MathF.Max(30f, _iconBoxDim + 8f);
 		float y = Balance.ViewHeight - (HudBars.Available ? HudBars.BarHeight : 8f) - 3f - 5f - size;
-		// Mỗi ván chỉ có MỘT kĩ năng (chọn bằng lá bài trước ván); Chosen == null (kiểm thử/cheat) thì hiện Nova + Warp
+		// Kĩ năng chọn bằng lá bài trước ván: Dễ / Trung bình có HAI (Q và E), Khó / Siêu khó MỘT (Q/E); Chosen == null (kiểm thử/cheat) thì hiện Nova (Q) + Warp (E)
 		float x = 8f;
-		foreach (var k in sk.Chosen is SkillKind one ? new[] { one } : new[] { SkillKind.Nova, SkillKind.Warp })
+		var shown = sk.Chosen is SkillKind one
+			? (sk.Chosen2 is SkillKind two ? new[] { one, two } : new[] { one })
+			: new[] { SkillKind.Nova, SkillKind.Warp };
+		for (int i = 0; i < shown.Length; i++)
 		{
-			string key = sk.Chosen == null ? (k == SkillKind.Nova ? "Q" : "E") : "Q/E";
+			var k = shown[i];
+			string key = shown.Length == 1 ? "Q/E" : i == 0 ? "Q" : "E";
 			switch (k)
 			{
 				case SkillKind.Nova: SkillBox(c, x, y, size, key, SkillSet.NovaCost, sk.NovaCd, SkillSet.NovaCooldown, p.Mana >= SkillSet.NovaCost, false, 0f, 0); break;
@@ -226,10 +254,12 @@ private static void DrawBossBars(Canvas c, World w)
 		c.FillRect(x, y, S, S, new Rgba(0f, 0f, 0f, 0.55f));
 
 		var tex = SkillIcons(out int fs);
-		if (tex != null && (icon + 1) * fs <= tex.Width)
+		int fr = SkillIconFrame[icon];
+		if (tex != null && _iconRects != null && fr < _iconRects.Length)
 		{
-			// Icon vẽ tay: đúng kích thước gốc, căn giữa ô; tối đi khi chưa dùng được
-			c.DrawTexture(tex, new Rect2(x + (S - fs) / 2f, y + (S - fs) / 2f, fs, fs), new Rect2(icon * fs, 0f, fs, fs), ready || active ? Rgba.White : new Rgba(0.5f, 0.52f, 0.6f));
+			// Icon vẽ tay: đúng kích thước gốc (cắt sát hình), căn giữa ô; tối đi khi chưa dùng được
+			var r = _iconRects[fr];
+			c.DrawTexture(tex, new Rect2(MathF.Round(x + (S - r.Width) / 2f), MathF.Round(y + (S - r.Height) / 2f), r.Width, r.Height), new Rect2(r.X, r.Y, r.Width, r.Height), ready || active ? Rgba.White : new Rgba(0.5f, 0.52f, 0.6f));
 		}
 		else
 		{

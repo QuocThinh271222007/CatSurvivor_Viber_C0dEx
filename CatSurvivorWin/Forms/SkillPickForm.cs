@@ -13,7 +13,7 @@ public sealed class SkillCardInfo
 
 /// <summary>
 /// Màn chọn kĩ năng trước ván, hiện như một hàng LÁ BÀI poker: rê chuột / Tab vào lá nào thì lá đó nhô lên và mô tả hiện bên dưới;
-/// bấm lá (hoặc phím 1-4, Enter) để chọn, Esc để về menu. Hình lá bài phóng NGUYÊN số lần (pixel-art sắc nét).
+/// bấm lá (hoặc phím 1-4, Enter) để chọn, Esc để về menu. Độ Dễ / Trung bình chọn HAI lá liên tiếp (lá đầu = phím Q, lá sau = phím E). Hình lá bài phóng NGUYÊN số lần (pixel-art sắc nét).
 /// </summary>
 public sealed class SkillPickForm : SkinnedForm
 {
@@ -21,12 +21,20 @@ public sealed class SkillPickForm : SkinnedForm
 	private readonly List<CardControl> _controls = new();
 	private readonly PixelLabel _lblTitle = new(), _lblSub = new(), _lblDesc = new();
 
-	/// <summary>Kĩ năng đã chọn (null nếu đóng hộp thoại).</summary>
+	private readonly int _picks;
+
+	/// <summary>Kĩ năng đã chọn (lá đầu tiên; null nếu đóng hộp thoại khi chưa chọn xong).</summary>
 	public SkillKind? Chosen { get; private set; }
 
-	public SkillPickForm(List<SkillCardInfo> cards)
+	/// <summary>Kĩ năng thứ hai (chỉ khi được chọn hai lá).</summary>
+	public SkillKind? Chosen2 { get; private set; }
+
+	private SkillKind? _first;
+
+	public SkillPickForm(List<SkillCardInfo> cards, int picks = 1)
 	{
 		_cards = cards;
+		_picks = Math.Clamp(picks, 1, 2);
 		AutoScaleMode = AutoScaleMode.None; // toạ độ tính thẳng bằng pixel thật theo DPI trong OnLoad
 		FormBorderStyle = FormBorderStyle.FixedDialog;
 		MaximizeBox = false;
@@ -40,7 +48,9 @@ public sealed class SkillPickForm : SkinnedForm
 		_lblTitle.Text = "CHỌN KĨ NĂNG";
 		_lblTitle.PixelScale = 4;
 		_lblTitle.ForeColor = Color.FromArgb(255, 219, 97);
-		_lblSub.Text = "Mỗi ván chỉ mang MỘT kĩ năng, dùng bằng phím Q hoặc E. Bấm một lá bài (hoặc phím 1-4). Esc = về menu";
+		_lblSub.Text = _picks == 2
+			? "Độ Dễ / Trung bình: mang HAI kĩ năng. Chọn kĩ năng thứ nhất (phím Q), rồi kĩ năng thứ hai (phím E). Bấm lá bài hoặc phím 1-4. Esc = về menu"
+			: "Mỗi ván chỉ mang MỘT kĩ năng, dùng bằng phím Q hoặc E. Bấm một lá bài (hoặc phím 1-4). Esc = về menu";
 		_lblSub.PixelScale = 1;
 		_lblSub.ForeColor = Color.FromArgb(168, 176, 199);
 		_lblDesc.PixelScale = 1;
@@ -103,6 +113,22 @@ public sealed class SkillPickForm : SkinnedForm
 
 	private void Pick(SkillCardInfo info)
 	{
+		if (_picks == 2)
+		{
+			if (_first == null)
+			{
+				// Lá đầu = phím Q: đánh dấu rồi chờ chọn lá thứ hai
+				_first = info.Kind;
+				foreach (var o in _controls) o.Badge = o.Info.Kind == info.Kind ? "Q" : null;
+				_lblSub.Text = $"Đã chọn {info.Name} (phím Q). Chọn tiếp kĩ năng thứ HAI (phím E) - phải khác kĩ năng đầu. Esc = về menu";
+				return;
+			}
+			if (info.Kind == _first) return;          // không chọn trùng
+			Chosen = _first;
+			Chosen2 = info.Kind;
+			Close();
+			return;
+		}
 		Chosen = info.Kind;
 		Close();
 	}
@@ -124,6 +150,9 @@ public sealed class SkillPickForm : SkinnedForm
 
 		public SkillCardInfo Info { get; }
 		public int Number { get; }
+		private string _badge;
+		/// <summary>Nhãn phím đã gán cho lá này ("Q" cho lá chọn đầu); lá có nhãn luôn nhô lên.</summary>
+		public string Badge { get => _badge; set { if (_badge == value) return; _badge = value; Parent?.Invalidate(Bounds); } }
 		private bool _active;
 		public bool Active { get => _active; set { if (_active == value) return; _active = value; Parent?.Invalidate(Bounds); } } // vẽ lại cả vùng nền phía sau (control trong suốt)
 		public event EventHandler Highlighted, Picked;
@@ -139,7 +168,7 @@ public sealed class SkillPickForm : SkinnedForm
 		}
 
 		// Chỉ MỘT lá được chọn tại một thời điểm (lá rê chuột / focus gần nhất): lá đó nhô lên + viền vàng, các lá khác nằm yên
-		private bool Lifted => Active;
+		private bool Lifted => Active || Badge != null;
 
 		protected override void OnMouseEnter(EventArgs e) { Highlighted?.Invoke(this, e); base.OnMouseEnter(e); }
 		protected override void OnGotFocus(EventArgs e) { Highlighted?.Invoke(this, e); base.OnGotFocus(e); }
@@ -171,6 +200,15 @@ public sealed class SkillPickForm : SkinnedForm
 				// Bóng đổ dưới lá bài
 				_canvas.FillRect(x + 4 * f, top + 4 * f, w, h, new Rgba(0f, 0f, 0f, 0.45f));
 				_canvas.DrawTexture(art, new Rect2(x, top, w, h), Lifted ? Rgba.White : new Rgba(0.82f, 0.82f, 0.88f));
+
+				// Nhãn phím (Q) ở góc lá bài đã chọn
+				if (Badge != null)
+				{
+					int bs = 2 * f;
+					float bw = PixelFont.Measure(_canvas, Badge, bs) + 8 * f, bh = (PixelFont.LineHeight + 2) * bs + 4 * f;
+					_canvas.FillRect(x - 3 * f, top - 3 * f, bw, bh, UiSkin.AccentBright);
+					PixelFont.Draw(_canvas, Badge, new Vector2(x - 3 * f + 4 * f, top - 3 * f + 2 * f), bs, new Rgba(0.1f, 0.1f, 0.15f));
+				}
 
 				// Tên kĩ năng dưới lá bài
 				int ts = 2 * f;

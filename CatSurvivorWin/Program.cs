@@ -40,8 +40,9 @@ internal static class Program
 				// Đã mở khoá Sans (easter egg) thì chọn nhân vật trước (đóng/Esc = quay về menu)
 				if (!CharacterPick.Ask()) { showMenu = true; continue; }
 
-				// Mỗi ván chọn MỘT kĩ năng bằng lá bài (đóng/Esc = quay về menu)
-				SkillSet.RunChoice = SkillPick.Ask();
+				// Chọn kĩ năng bằng lá bài: Dễ / Trung bình được HAI, Khó / Siêu khó MỘT (đóng/Esc = quay về menu)
+				SkillSet.RunChoice = SkillPick.Ask(out var second);
+				SkillSet.RunChoice2 = second;
 				if (SkillSet.RunChoice == null) { showMenu = true; continue; }
 
 				using var game = new GameForm();

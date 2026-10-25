@@ -3,7 +3,7 @@ using System.Numerics;
 namespace CatSurvivor;
 
 /// <summary>
-/// Kĩ năng CHỦ ĐỘNG của mèo, tốn MANA. MỖI VÁN CHỈ CÓ MỘT kĩ năng, chọn bằng lá bài trước khi vào ván (xem SkillPick / Program); dùng phím Q hoặc E. (thanh xanh dương; xem Player.Mana / TrySpendMana):
+/// Kĩ năng CHỦ ĐỘNG của mèo, tốn MANA. Độ Dễ / Trung bình: mang HAI kĩ năng (Q = kĩ năng thứ nhất, E = thứ hai); Khó / Siêu khó: chỉ MỘT kĩ năng (Q hoặc E đều dùng được). Chọn bằng lá bài trước khi vào ván (xem SkillPick / Program). (thanh xanh dương; xem Player.Mana / TrySpendMana):
 ///  - [Q] Sóng xung kích (Nova): một đợt sóng quanh mèo gây sát thương và hất văng mọi quái trong tầm.
 ///  - [E] Làm chậm thời gian: quái (kể cả boss, nhẹ hơn) chạy và ra đòn chậm lại trong vài giây; mèo vẫn chạy bình thường.
 /// Chưa chọn (Chosen == null, kiểm thử) thì Q = Nova, E = Warp. Phím được GameInput xếp hàng khi bấm (không giữ). Hiển thị ở HUD (Hud.DrawSkills), hiệu ứng vẽ ở Draw(). Chưa có asset -> hình vẽ tạm bằng hình học;
@@ -15,6 +15,9 @@ public sealed class SkillSet
 {
 	/// <summary>Kĩ năng người chơi đã chọn cho ván sắp chơi (SkillPickForm đặt trước khi tạo World). null = chưa chọn: dùng được cả hai (kiểm thử, cheat).</summary>
 	public static SkillKind? RunChoice;
+
+	/// <summary>Kĩ năng thứ hai (chỉ độ Dễ / Trung bình): dùng phím E, kĩ năng thứ nhất (RunChoice) dùng phím Q. null = chỉ một kĩ năng.</summary>
+	public static SkillKind? RunChoice2;
 
 	public static string NameOf(SkillKind k) => k switch
 	{
@@ -59,10 +62,13 @@ public sealed class SkillSet
 	public float GuardCd { get; private set; }
 	public float GuardLeft { get; private set; }
 
-	/// <summary>Kĩ năng của ván này (mỗi ván chỉ một, dùng phím Q hoặc E). null = cả hai: Q = Nova, E = Warp.</summary>
+	/// <summary>Kĩ năng thứ nhất của ván này (null = chưa chọn: dùng cả hai, Q = Nova, E = Warp). Chỉ có một kĩ năng thì Q hoặc E đều dùng nó; có kĩ năng thứ hai thì Q = thứ nhất.</summary>
 	public SkillKind? Chosen { get; }
 
-	public SkillSet(Player p) { _p = p; Chosen = RunChoice; }
+	/// <summary>Kĩ năng thứ hai (độ Dễ / Trung bình), dùng phím E; null nếu ván này chỉ mang một kĩ năng.</summary>
+	public SkillKind? Chosen2 { get; }
+
+	public SkillSet(Player p) { _p = p; Chosen = RunChoice; Chosen2 = RunChoice == null || RunChoice2 == RunChoice ? null : RunChoice2; }
 
 	public bool WarpActive => WarpLeft > 0f;
 	public bool StopActive => StopLeft > 0f;
@@ -97,7 +103,8 @@ public sealed class SkillSet
 		bool q = input.ConsumeSkill(0), e = input.ConsumeSkill(1);
 		if (Chosen is SkillKind k)
 		{
-			if (q || e) Try(k);
+			if (Chosen2 is SkillKind k2) { if (q) Try(k); if (e) Try(k2); }   // hai kĩ năng: Q và E riêng
+			else if (q || e) Try(k);
 		}
 		else
 		{

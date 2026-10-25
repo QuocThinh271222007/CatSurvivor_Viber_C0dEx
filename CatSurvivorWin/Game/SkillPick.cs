@@ -1,7 +1,7 @@
 namespace CatSurvivor;
 
 /// <summary>
-/// Màn chọn kĩ năng chủ động trước mỗi ván: mỗi ván chỉ mang MỘT trong 4 kĩ năng, hiện thành hàng lá bài poker (SkillPickForm).
+/// Màn chọn kĩ năng chủ động trước mỗi ván: độ Dễ / Trung bình mang HAI trong 4 kĩ năng (Q = lá chọn đầu, E = lá thứ hai), độ Khó / Siêu khó chỉ MỘT; hiện thành hàng lá bài poker (SkillPickForm).
 /// Hình lá bài bạn tự vẽ: Assets/ui/poker.png (xuất từ poker.aseprite) dùng chung cho mọi kĩ năng; muốn mỗi kĩ năng một hình riêng thì thêm
 /// Assets/ui/skill_card_{nova|warp|stop|guard}.png (từ skill_card_{...}.aseprite) - lá nào có file riêng thì dùng file đó. Ảnh được cắt sát viền tự động.
 /// Không có hình nào thì dùng lá bài vẽ tạm.
@@ -54,11 +54,15 @@ public static class SkillPick
 		};
 	}
 
-	/// <summary>Hiện hộp thoại chọn; trả về kĩ năng đã chọn hoặc null nếu người chơi đóng hộp thoại.</summary>
-	public static SkillKind? Ask(IWin32Window owner = null)
+	/// <summary>Số kĩ năng được mang theo độ khó hiện tại: Dễ (0) và Trung bình (1) được HAI, Khó và Siêu khó chỉ MỘT.</summary>
+	public static int PicksAllowed => Settings.Difficulty <= 1 ? 2 : 1;
+
+	/// <summary>Hiện hộp thoại chọn; trả về kĩ năng đầu (null nếu người chơi đóng hộp thoại). `second` = kĩ năng thứ hai (null nếu độ khó chỉ cho một).</summary>
+	public static SkillKind? Ask(out SkillKind? second, IWin32Window owner = null)
 	{
-		using var form = new SkillPickForm(Cards());
+		using var form = new SkillPickForm(Cards(), PicksAllowed);
 		if (owner != null) form.ShowDialog(owner); else form.ShowDialog();
+		second = form.Chosen == null ? null : form.Chosen2;
 		return form.Chosen;
 	}
 }

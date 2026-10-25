@@ -13,7 +13,7 @@ public partial class HelpForm : SkinnedForm
 			"• Space hoặc Shift: DASH (lao nhanh, bất tử trong lúc lao, húc văng quái). Mỗi lượt hồi 20 giây\n" +
 			"• Chuột: ngắm hướng cho Claw (vuốt) / Wave Slash; Bow (cung) tự ngắm quái gần nhất\n" +
 			"• F: bật/tắt TỰ ĐỘNG NGẮM cho Bow / Holy Cross (tắt thì ngắm theo con trỏ chuột). Claw và Wave Slash luôn ngắm bằng chuột\n" +
-			"• Q hoặc E: dùng KĨ NĂNG đã chọn bằng lá bài trước ván (mỗi ván chỉ mang MỘT trong 4 kĩ năng): SÓNG XUNG KÍCH (30 mana) - gây sát thương và hất văng quái quanh bạn, LÀM CHẬM THỜI GIAN (45 mana) - quái chậm lại 4 giây, NGỪNG THỜI GIAN (60 mana) - quái đứng yên 1,5 giây, hoặc BẤT TỬ (50 mana) - 2 giây. Mana (thanh xanh dương) tự hồi dần\n" +
+			"• Q hoặc E: dùng KĨ NĂNG đã chọn bằng lá bài trước ván (độ Dễ và Trung bình mang HAI kĩ năng: lá đầu = Q, lá hai = E; Khó và Siêu khó chỉ MỘT, Q hoặc E đều dùng; 4 kĩ năng để chọn): SÓNG XUNG KÍCH (30 mana) - gây sát thương và hất văng quái quanh bạn, LÀM CHẬM THỜI GIAN (45 mana) - quái chậm lại 4 giây, NGỪNG THỜI GIAN (60 mana) - quái đứng yên 1,5 giây, hoặc BẤT TỬ (50 mana) - 2 giây. Mana (thanh xanh dương) tự hồi dần\n" +
 				"• Esc hoặc P: tạm dừng   •   M: bật/tắt âm thanh   •   Cài đặt ở menu chính / Tạm dừng\n" +
 			"Vũ khí tự động tấn công, bạn chỉ cần di chuyển và né."),
 		("LÊN CẤP & NÂNG CẤP",

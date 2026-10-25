@@ -22,34 +22,39 @@ internal static partial class SelfTest
 			Say($"  dựng khung 640x360 (thế giới + HUD): {(Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency / 100:F2} ms");
 		}
 
-		foreach (bool full in new[] { false, true })
+		var refresh = typeof(GameForm).GetMethod("DisplayRefreshRate", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+		Say($"  tần số quét màn hình game đọc được: {refresh.Invoke(null, null)} Hz");
+		foreach (var (full, timerLoop) in new[] { (true, true), (true, false), (false, false) })
 		{
 			Settings.Fullscreen = full;
+			GameForm.ForceTimerLoop = timerLoop;
 			var game = new GameForm();
 			var gw = game.CurrentWorld;
 			gw.Player.God = true;
-			for (int i = 0; i < 120; i++) gw.Enemies.Enemies.Add(EnemyTypes.Create(i % 5, 0f, gw.Player.Pos + V.FromAngle(i * 0.7f) * (90f + i)));
-			var timer = new System.Windows.Forms.Timer { Interval = 500 };
-			int ticks = 0; long f0 = 0, p0 = 0;
-			var canvasCtl = game.Controls.OfType<GameCanvas>().FirstOrDefault() ?? game.Controls.Find("canvas", true).OfType<GameCanvas>().First();
-			int paints = 0;
-			canvasCtl.Paint += (_, _) => paints++;
-			timer.Tick += (_, _) =>
+			for (int i = 0; i < 120; i++) gw.Enemies.Enemies.Add(EnemyTypes.Create(i % 4, 0f, gw.Player.Pos + V.FromAngle(i * 0.7f) * (90f + i)));
+			game.FrameStamps = new List<double>();
+			var probe = new System.Windows.Forms.Timer { Interval = 250 };
+			var sw = Stopwatch.StartNew();
+			probe.Tick += (_, _) =>
 			{
-				ticks++;
 				gw.Player.Hp = gw.Player.MaxHp;
-				if (ticks == 3) { f0 = gw.Frame; p0 = paints; }
-				if (ticks == 11)
+				if (sw.Elapsed.TotalSeconds > 8)
 				{
-					Say($"  vòng lặp thật {(full ? "TOÀN MÀN HÌNH" : "cửa sổ     ")}: client {canvasCtl.ClientSize.Width}x{canvasCtl.ClientSize.Height}, {(gw.Frame - f0) / 4.0:F0} khung/giây (mô phỏng), {(paints - p0) / 4.0:F0} lần vẽ/giây, quái {gw.Enemies.Enemies.Count}");
-					timer.Stop();
+					probe.Stop();
+					var st = game.FrameStamps.Where(x => x - game.FrameStamps[0] > 2000).ToList();
+					var gaps = new List<double>();
+					for (int i = 1; i < st.Count; i++) gaps.Add(st[i] - st[i - 1]);
+					gaps.Sort();
+					if (gaps.Count > 10)
+						Say($"  vòng lặp {(timerLoop ? "Timer cũ  " : "Idle+DWM  ")} {(full ? "TOÀN MÀN HÌNH" : "cửa sổ     ")} ({game.ClientSize.Width}x{game.ClientSize.Height}): update {game.UpdateTicks * 1000.0 / Stopwatch.Frequency / game.FrameStamps.Count:F1} ms + vẽ {game.PaintTicks * 1000.0 / Stopwatch.Frequency / game.FrameStamps.Count:F1} ms/khung · {gaps.Count / ((st[^1] - st[0]) / 1000.0):F0} khung/giây · khoảng cách giữa 2 khung (ms): min {gaps[0]:F1} · trung vị {gaps[gaps.Count / 2]:F1} · p95 {gaps[(int)(gaps.Count * 0.95)]:F1} · p99 {gaps[(int)(gaps.Count * 0.99)]:F1} · max {gaps[^1]:F1}");
 					game.Close();
 				}
 			};
-			game.Shown += (_, _) => timer.Start();
+			game.Shown += (_, _) => probe.Start();
 			game.ShowDialog();
 		}
 		Settings.Fullscreen = false;
+		GameForm.ForceTimerLoop = false;
 
 		foreach (var (cw, ch) in new[] { (1280, 720), (1920, 1080), (1536, 864), (1366, 768), (1600, 900), (2560, 1440) })
 		{

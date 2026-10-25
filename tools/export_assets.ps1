@@ -12,7 +12,7 @@ $map = @(
   @{ From = "Bow.aseprite";   To = "weapons\bow.png"   },   # 4 khung 64x64: 0 thả dây (+ mũi tên riêng ở góc trên), 1-3 kéo dây
   @{ From = "knife.aseprite"; To = "weapons\knife.png" },   # dao, mũi hướng LÊN
   @{ From = "Claw.aseprite";  To = "weapons\claw.png"  },   # găng vuốt, mũi hướng sang PHẢI
-  @{ From = "skills.aseprite"; To = "ui\skills.png" },   # ICON KĨ NĂNG (HUD): dải ngang các khung vuông, khung 0 = Q (Sóng xung kích), khung 1 = E (Làm chậm thời gian); chưa vẽ thì bỏ qua
+  @{ From = "skills.aseprite"; To = "ui\skills.png" },   # ICON KĨ NĂNG (HUD): dải ngang 4 khung vuông 64x64: 0 đồng hồ (Làm chậm thời gian), 1 hình vàng (Bất tử), 2 bông tuyết (Ngừng thời gian), 3 sóng trắng (Sóng xung kích); game cắt sát hình khi vẽ ở HUD; chưa vẽ thì bỏ qua
   @{ From = "poker.aseprite"; To = "ui\poker.png" },   # LÁ BÀI poker dùng chung cho màn chọn kĩ năng (1 khung; game tự cắt sát viền, phóng nguyên số lần). Mỗi kĩ năng muốn hình riêng thì thêm skill_card_*.aseprite bên dưới
   @{ From = "skill_card_nova.aseprite"; To = "ui\skill_card_nova.png" },   # LÁ BÀI chọn kĩ năng Sóng xung kích (màn chọn trước ván, 1 khung, nên cỡ 64-192px); chưa vẽ thì thẻ chỉ có chữ
   @{ From = "skill_card_warp.aseprite"; To = "ui\skill_card_warp.png" },   # LÁ BÀI chọn kĩ năng Làm chậm thời gian

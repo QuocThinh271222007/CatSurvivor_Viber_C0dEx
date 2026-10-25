@@ -1153,6 +1153,46 @@ internal static partial class SelfTest
 				Say($"  sau khi hết bất tử: máu {w.Player.Hp:0} (mong đợi < {hp0:0}), đang bất tử={w.Player.Skills.GuardActive}");
 				Shot(w, "pick_hud_guard");
 			}
+			// Độ Dễ / Trung bình: HAI kĩ năng (Q = đầu, E = thứ hai); Khó / Siêu khó: MỘT
+			{
+				int savedDiff = Settings.Difficulty;
+				var savedSecond = SkillSet.RunChoice2;
+				try
+				{
+					foreach (int d in new[] { 0, 1, 2, 3 })
+					{
+						Settings.Difficulty = d;
+						Say($"  độ khó {d}: được mang {SkillPick.PicksAllowed} kĩ năng (mong đợi {(d <= 1 ? 2 : 1)})");
+					}
+					SkillSet.RunChoice = SkillKind.Nova; SkillSet.RunChoice2 = SkillKind.Stop;
+					foreach (var key in new[] { Keys.Q, Keys.E })
+					{
+						var w = new World();
+						w.Player.God = true;
+						w.Player.Mana = w.Player.MaxMana;
+						w.Input.KeyDown(key); w.Input.KeyUp(key);
+						w.Update(1f / 60f);
+						var sk = w.Player.Skills;
+						bool ok = key == Keys.Q ? sk.NovaCd > 0f && !sk.StopActive : sk.StopActive && sk.NovaCd <= 0f;
+						Say($"  hai kĩ năng Nova(Q) + Stop(E), bấm {key}: nova={sk.NovaCd > 0f} stop={sk.StopActive} -> {(ok ? "OK" : "!! SAI")}");
+					}
+					Shot(new World(), "pick_hud_two");
+					// Màn chọn: lá đầu đánh dấu Q và chưa đóng, lá trùng bị bỏ qua, lá thứ hai đóng form
+					using var f2 = new SkillPickForm(SkillPick.Cards(), 2);
+					f2.StartPosition = FormStartPosition.Manual; f2.Location = new Point(40, 40);
+					f2.Show(); Application.DoEvents();
+					var pick = typeof(SkillPickForm).GetMethod("Pick", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+					var cards = SkillPick.Cards();
+					pick.Invoke(f2, new object[] { cards[0] }); Application.DoEvents();
+					bool openAfterFirst = f2.Visible && f2.Chosen == null;
+					using (var bmp2 = new Bitmap(f2.Width, f2.Height)) { f2.DrawToBitmap(bmp2, new Rectangle(0, 0, f2.Width, f2.Height)); bmp2.Save(Path.Combine(_out, "pick_form_two.png")); }
+					pick.Invoke(f2, new object[] { cards[0] });                // trùng: bỏ qua
+					bool stillOpen = f2.Visible && f2.Chosen == null;
+					pick.Invoke(f2, new object[] { cards[2] });
+					Say($"  màn chọn 2 lá: sau lá đầu còn mở={openAfterFirst}, chọn trùng bị bỏ qua={stillOpen}, kết quả={f2.Chosen}+{f2.Chosen2} (mong đợi Nova+Stop) -> {(openAfterFirst && stillOpen && f2.Chosen == SkillKind.Nova && f2.Chosen2 == SkillKind.Stop ? "OK" : "!! SAI")}");
+				}
+				finally { Settings.Difficulty = savedDiff; SkillSet.RunChoice2 = savedSecond; }
+			}
 			SkillSet.RunChoice = SkillKind.Warp;
 			Shot(new World(), "pick_hud_warp");
 			SkillSet.RunChoice = null;

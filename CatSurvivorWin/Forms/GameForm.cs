@@ -38,8 +38,23 @@ public partial class GameForm : Form
 	[System.Runtime.InteropServices.DllImport("user32.dll")] private static extern int ReleaseDC(IntPtr hWnd, IntPtr hdc);
 	[System.Runtime.InteropServices.DllImport("gdi32.dll")] private static extern int GetDeviceCaps(IntPtr hdc, int index);
 
+	// Vòng lặp khoá theo nhịp quét màn hình: WinForms Timer dù đặt 1 ms vẫn chỉ nhả nhịp ~16 ms (đo thực tế: ~60 khung/giây, cách nhau 9-43 ms trên màn 144 Hz
+	// -> giật hình + trễ phím). Thay vào đó chạy trong Application.Idle (khi không còn tin nhắn nào chờ) và chờ DwmFlush() = chờ lần Windows ghép hình kế tiếp,
+	// nên mỗi khung hình cách nhau đúng một chu kỳ quét màn hình và phím bấm được xử lý ngay trước khung kế. Không có DWM thì dùng lại Timer như cũ.
+	[System.Runtime.InteropServices.DllImport("dwmapi.dll")] private static extern int DwmFlush();
+	[System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool PeekMessage(out NativeMessage msg, IntPtr hWnd, uint min, uint max, uint remove);
+	[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+	private struct NativeMessage { public IntPtr Hwnd; public uint Message; public IntPtr WParam, LParam; public uint Time; public int X, Y; }
+
+	/// <summary>Chỉ dùng khi đo (selftest --present): ghi mốc thời gian (ms) của từng khung hình đã chạy.</summary>
+	internal List<double> FrameStamps;
+	internal long UpdateTicks, PaintTicks;
+	internal static bool ForceTimerLoop;   // chỉ để so sánh khi đo: ép dùng Timer thay vì vòng lặp Idle
+
 	private double _frameSeconds = 1.0 / 60.0;
 	private bool _highResTimer;
+	private bool _idleLoop;          // đang dùng vòng lặp Idle + DwmFlush (true) hay Timer dự phòng (false)
+	private bool _stopped;
 
 	private static int DisplayRefreshRate()
 	{
@@ -54,23 +69,54 @@ public partial class GameForm : Form
 	}
 
 	// ------------------------------------------------------------------ vòng lặp
-	private void gameTimer_Tick(object sender, EventArgs e)	{
+	/// <summary>
+	/// Chạy khung hình liên tục khi hàng đợi tin nhắn trống; có tin nhắn (phím, chuột, hộp thoại...) thì nhường để xử lý ngay.
+	/// Nhịp: mỗi khung chiếm n chu kỳ quét màn hình, n chọn theo thời gian dựng khung gần đây (nhẹ -> mỗi chu kỳ = 144 khung/giây trên màn 144 Hz; nặng hơn một chu kỳ
+	/// -> 2 chu kỳ = 72 khung/giây ĐỀU, thay vì lúc 1 lúc 2 chu kỳ gây giật).
+	/// </summary>
+	private void OnAppIdle(object sender, EventArgs e)
+	{
+		double period = 1000.0 / Math.Clamp(DisplayRefreshRate(), 30, 240);
+		while (!_stopped && !IsDisposed && IsHandleCreated && !PeekMessage(out _, IntPtr.Zero, 0, 0, 0))
+		{
+			long t0 = Stopwatch.GetTimestamp();
+			Frame(gated: false);
+			double work = (Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency;
+			_workMs += (work - _workMs) * 0.08;
+			int n = Math.Clamp((int)Math.Ceiling(_workMs * 1.1 / period), 1, 3);
+			do
+			{
+				if (DwmFlush() != 0) { _idleLoop = false; Application.Idle -= OnAppIdle; gameTimer.Start(); return; } // DWM không dùng được -> về Timer
+			} while ((Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency < (n - 0.5) * period);
+		}
+	}
+	private double _workMs = 4.0;   // thời gian dựng một khung (cập nhật + vẽ), trung bình trượt
+
+	private void gameTimer_Tick(object sender, EventArgs e) => Frame(gated: true);
+
+	/// <summary>Một khung hình: cập nhật thế giới rồi vẽ. gated = true (Timer dự phòng) thì tự bỏ qua nếu chưa tới nhịp khung kế.</summary>
+	private void Frame(bool gated)
+	{
 		long now = _clock.ElapsedTicks;
 		double elapsed = (now - _lastTicks) / (double)Stopwatch.Frequency;
-		if (elapsed < _frameSeconds - 0.0006) return; // chưa tới nhịp khung hình kế tiếp (timer 1 ms, tự điều tiết theo tần số quét màn hình)
+		if (elapsed < (gated ? _frameSeconds - 0.0006 : 0.002)) return; // chưa tới nhịp khung hình kế tiếp
 		float dt = (float)elapsed;
 		_lastTicks = now;
 		dt = Math.Min(dt, 0.05f); // lag (kéo cửa sổ...) thì không để game nhảy vọt
 
 		if (_dialogOpen || _world.IsEnded) return;
+		FrameStamps?.Add(now * 1000.0 / Stopwatch.Frequency);
 
 		// TimeScale (cheat debug): chia nhỏ thành nhiều bước ngắn để mô phỏng không bị "nhảy vọt" khi chạy nhanh
 		float scaled = dt * _world.TimeScale;
 		int steps = Math.Max(1, (int)MathF.Ceiling(scaled / 0.025f));
+		long u0 = Stopwatch.GetTimestamp();
 		for (int i = 0; i < steps && !_world.IsEnded; i++)
 			_world.Update(scaled / steps);
+		long u1 = Stopwatch.GetTimestamp();
 		canvas.Invalidate();
 		canvas.Update(); // vẽ ngay thay vì chờ
+		if (FrameStamps != null) { UpdateTicks += u1 - u0; PaintTicks += Stopwatch.GetTimestamp() - u1; }
 
 		if (_world.PendingLevelUps > 0 && !_world.IsEnded) ShowUpgrades();
 	}
@@ -106,7 +152,9 @@ public partial class GameForm : Form
 		try { _highResTimer = timeBeginPeriod(1) == 0; } catch (Exception) { }
 		_frameSeconds = _highResTimer ? 1.0 / Math.Clamp(DisplayRefreshRate(), 60, 144) : 1.0 / 60.0;
 		gameTimer.Interval = _highResTimer ? 1 : 8;
-		gameTimer.Start();
+		try { _idleLoop = !ForceTimerLoop && DwmFlush() == 0; } catch (Exception) { _idleLoop = false; }   // thử DWM một lần: được thì dùng vòng lặp Idle khoá theo nhịp quét
+		if (_idleLoop) Application.Idle += OnAppIdle;
+		else gameTimer.Start();
 	}
 
 	// ------------------------------------------------------------------ phím
@@ -204,7 +252,7 @@ public partial class GameForm : Form
 
 	private void OnEnded(bool victory)
 	{
-		gameTimer.Stop();
+		StopLoop();
 		canvas.Invalidate();
 		canvas.Update(); // khung hình cuối (mèo ngã / boss đổ)
 
@@ -214,9 +262,16 @@ public partial class GameForm : Form
 		Close();
 	}
 
+	private void StopLoop()
+	{
+		_stopped = true;
+		Application.Idle -= OnAppIdle;
+		gameTimer.Stop();
+	}
+
 	protected override void OnFormClosed(FormClosedEventArgs e)
 	{
-		gameTimer.Stop();
+		StopLoop();
 		if (_highResTimer) { try { timeEndPeriod(1); } catch (Exception) { } _highResTimer = false; }
 		base.OnFormClosed(e);
 	}
