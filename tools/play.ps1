@@ -11,5 +11,5 @@ dotnet build (Join-Path $sol "CatSurvivorWin.sln") -nologo -v q
 if ($LASTEXITCODE -ne 0) { Write-Error "Build lỗi"; exit 1 }
 
 # chép bản build sang play\, giữ lại điểm số và cài đặt cũ
-robocopy (Join-Path $sol "CatSurvivorWin\bin\Debug\net8.0-windows") $play /MIR /XF thanhtichs.txt settings.txt /NFL /NDL /NJH /NJS | Out-Null
+robocopy (Join-Path $sol "CatSurvivorWin\bin\Debug\net11.0-windows") $play /MIR /XF thanhtichs.txt settings.txt /NFL /NDL /NJH /NJS | Out-Null
 Start-Process (Join-Path $play "CatSurvivor.exe") -WorkingDirectory $play

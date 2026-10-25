@@ -17,6 +17,7 @@ public sealed class GameCanvas : Control
 	private PointF _offset;
 
 	/// <summary>Ván chơi đang hiển thị (null = chỉ tô đen).</summary>
+	[System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
 	public World World { get; set; }
 
 	public GameCanvas()

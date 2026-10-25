@@ -152,8 +152,10 @@ public sealed class SkillPickForm : SkinnedForm
 		public int Number { get; }
 		private string _badge;
 		/// <summary>Nhãn phím đã gán cho lá này ("Q" cho lá chọn đầu); lá có nhãn luôn nhô lên.</summary>
+		[System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
 		public string Badge { get => _badge; set { if (_badge == value) return; _badge = value; Parent?.Invalidate(Bounds); } }
 		private bool _active;
+		[System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
 		public bool Active { get => _active; set { if (_active == value) return; _active = value; Parent?.Invalidate(Bounds); } } // vẽ lại cả vùng nền phía sau (control trong suốt)
 		public event EventHandler Highlighted, Picked;
 

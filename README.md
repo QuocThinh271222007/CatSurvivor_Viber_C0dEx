@@ -1,11 +1,14 @@
-# Cat Survivor – bản Windows Forms (.NET 8)
+﻿# Cat Survivor – bản Windows Forms (.NET 11)
 
 Game sinh tồn top-down kiểu *Vampire Survivors*: điều khiển chú mèo giữa bầy quái ngày càng đông, nhặt XP lên cấp (tối đa **cấp 27**),
 chọn nâng cấp / hợp nhất vũ khí / mặc giáp, rồi đánh **boss** trong một vùng bị khoá. Đây là bản chuyển từ Godot sang **Windows Forms**
 theo đúng yêu cầu của đề (Lập trình Windows – 2511COMP1019), giữ nguyên toàn bộ gameplay.
 
 ## Mở và chạy
-1. Mở `CatSurvivorWin.sln` bằng **Visual Studio 2022** (cần workload *.NET desktop development*, .NET 8 SDK).
+**Yêu cầu:** Windows 10/11, **.NET 11 SDK** (tải tại https://dotnet.microsoft.com/download/dotnet/11.0 - nếu mới ở bản RC thì chọn bản *SDK* RC/Preview mới nhất) và **Visual Studio 2026** mới nhất (workload *.NET desktop development*; file `.vsconfig` đã ghi sẵn, VS sẽ tự đề nghị cài thành phần còn thiếu).
+Nếu .NET 11 đang là bản RC: trong VS vào *Tools → Options → Environment → Preview Features* và bật **Use previews of the .NET SDK**. `global.json` ở thư mục gốc ghim SDK từ 11.0 trở lên.
+
+1. Clone repo hoặc tải **Code → Download ZIP** rồi giải nén (không cần cài thêm gói NuGet nào, mọi tài nguyên đều nằm sẵn trong repo), mở `CatSurvivorWin.sln` bằng Visual Studio.
 2. Nhấn **F5** (hoặc *Start*). Tài nguyên (`Assets/`) và `thongtinnhom.txt` tự được chép cạnh file `.exe`.
 3. Dòng lệnh: `dotnet run --project CatSurvivorWin` · kiểm tra tự động: `CatSurvivor.exe --selftest --out <thư_mục>` (xem mục *Tự kiểm tra*).
 

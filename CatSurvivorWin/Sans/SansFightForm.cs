@@ -13,6 +13,7 @@ internal sealed class SansCanvas : Control
 	private float _scale = 1f;
 	private PointF _offset;
 
+	[System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
 	public SansFight Fight { get; set; }
 
 	public SansCanvas()

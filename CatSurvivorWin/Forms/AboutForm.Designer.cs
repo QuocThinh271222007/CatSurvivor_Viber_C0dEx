@@ -39,7 +39,7 @@ partial class AboutForm
 		lblGame.Name = "lblGame";
 		lblGame.PixelScale = 2;
 		lblGame.Size = new Size(660, 52);
-		lblGame.Text = "CAT SURVIVOR  •  Bài tập Lập trình Windows (2511COMP1019)\nCông nghệ: Windows Forms (.NET 8, C#)  •  Phiên bản 1.0";
+		lblGame.Text = "CAT SURVIVOR  •  Bài tập Lập trình Windows (2511COMP1019)\nCông nghệ: Windows Forms (.NET 11, C#)  •  Phiên bản 1.0";
 		//
 		// tblTeam
 		//
