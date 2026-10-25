@@ -1,0 +1,11 @@
+﻿# Cấu hình giao diện (menu). Mọi dòng đều tuỳ chọn; xoá file này cũng được. Xem docs/UI_ASSETS.md.
+# Độ dày viền (px) TRONG ảnh button_*.png / panel.png dùng cho 9-slice, và số lần phóng viền khi vẽ:
+button_margin=6
+button_scale=2
+panel_margin=6
+panel_scale=2
+# Cách phủ ảnh nền menu_bg.png: cover (phủ kín, cắt phần thừa) | stretch (kéo giãn) | tile (lát)
+bg_mode=cover
+# Màu nhấn và màu chữ (hex RRGGBB) - bỏ dấu # ở đầu dòng để dùng
+# accent=F2A633
+# text=F0F0F7

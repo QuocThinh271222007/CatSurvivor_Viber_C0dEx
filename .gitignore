@@ -1,0 +1,10 @@
+﻿bin/
+obj/
+.vs/
+*.user
+settings.txt
+selftest.log
+play/
+# Tai san Undertale / Sans (Toby Fox) - KHONG dua len repo; tao lai bang tools\import_sans_fight.ps1 va tools\export_assets.ps1
+CatSurvivorWin/Assets/sans/
+CatSurvivorWin/Assets/characters/sans.png

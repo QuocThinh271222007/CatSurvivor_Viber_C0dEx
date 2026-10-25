@@ -1,0 +1,5 @@
+# Thông tin nhóm thực hiện - mỗi dòng: Họ tên|MSSV|Lớp  (dòng bắt đầu bằng # là chú thích)
+Phạm Trần Quốc Thịnh|51.01.104.098|Lớp 51.01.CNTT.A
+Bùi Duy Hưng|51.01.104.133|Lớp 51.01.CNTT.B
+Mai Trương Thiên Lộc|51.01.104.140|Lớp 51.01.CNTT.B
+Nguyễn Thanh Thuận|51.01.104.157|Lớp 51.01.CNTT.B
