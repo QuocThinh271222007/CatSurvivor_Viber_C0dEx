@@ -21,7 +21,7 @@ $map = @(
   @{ From = "small eye ball.aseprite"; To = "enemies\minieye.png" },   # MẮT CON (giai đoạn 2 của boss): 6 khung 64x64, con mắt NHÌN SANG TRÁI (đuôi phấp phới bên phải); khung 1 = TRẮNG hoàn toàn (bị đánh), khung 0,2,3,4,5 = bay; game tự lật theo hướng mèo
   @{ From = "plasma-eyeball skill.aseprite"; To = "enemies\plasma.png" },   # CHƯỞNG của mắt con / chùm tia chữ thập: 1 khung, dải plasma nằm NGANG (game tự cắt sát viền, kéo giãn theo chiều dài, xoay theo hướng)
   @{ From = "Sans.aseprite"; To = "characters\sans.png" },   # NHÂN VẬT SANS (mở khoá khi đánh bại Sans - easter egg nhập tên SANS): 5 khung 64x64, 0-1 = chạy (nhìn PHẢI), 2-4 = đứng yên (nhìn thẳng); game vẽ nguyên cỡ, chân ở khoảng y=47
-  @{ From = "brute.aseprite"; To = "enemies\brute.png" },   # BRUTE (khủng long cầm khiên, nhìn TRÁI): 10 khung 64x64 - 0 gồng/lao · 1-2 KHIÊN rời (vẽ đè lên thân khi còn khiên; để trống thì game vẽ khiên tạm) · 3,6,7,8 đi · 4 trắng (dáng có khiên) · 5 trắng (bị đánh, không khiên) · 9 kiệt sức/chết. Còn khiên thì lao tới; khiên vỡ thì chỉ đi chậm
+  @{ From = "brute.aseprite"; To = "enemies\brute.png" },   # BRUTE (khủng long cầm khiên, nhìn TRÁI): 10 khung 64x64 - 0 gồng/lao (đã có khiên trên tay) · 1-2 KHIÊN rời (vẽ đè lên thân khi còn khiên lúc đi; để trống thì game vẽ khiên tạm) · 3,6,7,8 đi · 4 trắng (dáng có khiên) · 5 trắng (bị đánh, không khiên) · 9 kiệt sức/chết. Còn khiên thì lao tới; khiên vỡ thì chỉ đi chậm
   @{ From = "EyeBoss.aseprite"; To = "enemies\eyeboss.png" },   # BOSS: 4 khung 64x64 (con mắt đảo tròng), mắt nằm giữa khung
   @{ From = "holy shield and holy cross.aseprite"; To = "weapons\holy.png" }   # 2 khung 64x64: 0 = thánh giá (Holy Cross), 1 = khiên/bong bóng thánh (Holy Shield)
 )
