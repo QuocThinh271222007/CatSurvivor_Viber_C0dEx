@@ -4,6 +4,8 @@ Game sinh tồn top-down kiểu *Vampire Survivors*: điều khiển chú mèo g
 chọn nâng cấp / hợp nhất vũ khí / mặc giáp, rồi đánh **boss** trong một vùng bị khoá. Đây là bản chuyển từ Godot sang **Windows Forms**
 theo đúng yêu cầu của đề (Lập trình Windows – 2511COMP1019), giữ nguyên toàn bộ gameplay.
 
+> Tài liệu kĩ thuật chi tiết (công nghệ, thuật toán, hàm, cấu trúc dữ liệu): **`docs/KY_THUAT.md`**.
+
 ## Mở và chạy
 **Yêu cầu:** Windows 10/11, **.NET 11 SDK** (tải tại https://dotnet.microsoft.com/download/dotnet/11.0 - nếu mới ở bản RC thì chọn bản *SDK* RC/Preview mới nhất) và **Visual Studio 2026** mới nhất (workload *.NET desktop development*; file `.vsconfig` đã ghi sẵn, VS sẽ tự đề nghị cài thành phần còn thiếu).
 Nếu .NET 11 đang là bản RC: trong VS vào *Tools → Options → Environment → Preview Features* và bật **Use previews of the .NET SDK**. `global.json` ở thư mục gốc ghim SDK từ 11.0 trở lên.
@@ -82,7 +84,7 @@ Khi máu dưới 35%, viền màn hình chuyển đỏ và "thở" theo nhịp t
 
 ## Độ khó theo cấp nhân vật
 Quái mạnh lên theo **thời gian chơi cộng thêm 20 giây cho mỗi cấp** nhân vật (hằng số `LevelSecondsBonus` trong `Game/EnemyManager.cs`): máu, sát thương, giáp, tốc độ, loại quái và đội hình mở khoá đều tính theo mốc này.
-Cấp càng cao quái càng đông (trần số quái cùng lúc: 150 + 2/cấp, tối đa 200) và sinh nhanh hơn.
+Cấp càng cao quái càng đông (trần số quái cùng lúc: 120 + 2/cấp, tối đa 170) và sinh nhanh hơn.
 **Bomber**: tốc độ gốc 80 (trước 55); khi cách mèo dưới 260px nó nước rút với tốc độ 1.35 x tốc độ chạy hiện tại của mèo (tối đa 300) nên luôn bắt kịp mèo chạy thẳng để châm ngòi và nổ - chỉ dash hoặc đổi hướng mới thoát (hằng số `BombSprintRange` / `BombChaseRatio` / `BombMaxSpeed` trong `Game/EnemyManager.cs`; kiểm tra `--selftest --bomber`).
 ## Chế độ độ khó
 Chọn ở **Cài đặt của menu chính** (nút "Độ khó"; mở Cài đặt từ menu Tạm dừng thì bị khoá, không đổi giữa ván được). Lưu trong `settings.txt` (`difficulty=0..3`, mặc định 0). Các mức cộng dồn, logic ở `Core/Difficulty.cs`:
